@@ -1,0 +1,3 @@
+curl -XPOST 'http://127.0.0.1:5000/feed' -d 'action=1&feed_id=1&user_id=1&is_friend=1'
+
+curl -XGET 'http://127.0.0.1:5000/feed/10?max_id=0&is_friend=1&now_user_stat=0'

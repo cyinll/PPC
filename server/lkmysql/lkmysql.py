@@ -4,25 +4,18 @@ from sqlalchemy.orm import sessionmaker
 engine = create_engine(
     "mysql+pymysql://root:lvliang@localhost:3306/pcc?charset=utf8",
     encoding="utf-8",
-    echo=True
+    echo=False
 )
 
 DB_Session = sessionmaker(bind=engine)
 session = DB_Session()
-session.autocommit = True
 
 def update_feed_stat(feed_id, is_friend, user_id):
-    if is_friend != 0:
-        session.execute(
-            "UPDATE feed_stat SET total=total+1, \
-            max_friend_uid=user_id \
-            WHERE feed_id=%s" % feed_id
-        )
-    else:
-        session.execute(
-            "UPDATE feed_stat SET total=total+1, \
-            WHERE feed_id=%s" % feed_id
-        )
+    session.execute(
+        "UPDATE feed_stat SET total=total+1, \
+        WHERE feed_id=%s" % feed_id
+    )
+    session.commit()
 
 def add_feed_like(feed_id, is_friend, user_id):
     now_time = datetime.datetime.now()
@@ -35,8 +28,38 @@ def add_feed_like(feed_id, is_friend, user_id):
     )
 
 def query_feed_stat(feed_id):
-    (total, max_friend_uid) = sesion.execute(
-        "SELECT total, max_friend_uid FROM feed_stat \
+    total = session.execute(
+        "SELECT total FROM feed_stat \
         WHERE feed_id=%s" % feed_id
-    ).fetchone()
-    return dict(total=total, max_friend_uid=max_friend_uid)
+    ).fetchone()[0]
+    return total
+
+def query_friend_list_sql(user_id):
+    return "SELECT to_uid from friends where from_uid=%s" % user_id
+
+def query_feed_like(feed_id, user_id, is_friend, max_id, page_count=50):
+    in_str = "in"
+    if not is_friend:
+        in_str = "not in"
+    res = session.execute(
+        "SELECT id, like_uid FROM feed_like \
+        where feed_id = %s and \
+        like_uid %s (%s) and \
+        id > %s \
+        order by id limit %s"
+        % (
+            feed_id,
+            in_str,
+            query_friend_list_sql(user_id),
+            max_id,
+            page_count
+        )
+    ).fetchall()
+    user_list = []
+    new_max_id = 0
+    new_is_friend = is_friend
+    if len(res) > 0:
+        user_list = [x[1] for x in res]
+        new_max_id = res[-1][0]
+    return user_list, new_max_id
+    
