@@ -1,4 +1,4 @@
-curl -XPOST 'http://127.0.0.1:5000/v1/feed' -d 'action=1&feed_id=1&user_id=1&is_friend=1'
+curl -XPOST 'http://127.0.0.1:5000/v1/feed' -d 'feed_id=1&user_id=1'
 
 curl -XGET 'http://127.0.0.1:5000/v1/feed/10/likes?max_id=0&user_id=101&is_friend=1&max_id=0'
 

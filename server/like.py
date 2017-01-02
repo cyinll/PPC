@@ -1,5 +1,7 @@
 # import lkredis
 import json
+import traceback  
+from lkredis import lkredis
 from lkmysql import lkmysql
 from flask import Flask
 from flask import request
@@ -18,15 +20,15 @@ def feed_like():
         res = dict()
         feed_id = int(request.form['feed_id'])
         user_id = int(request.form['user_id'])
-        # lkredis.update_feed_stat(
-        #     feed_id,
-        #     user_id
-        # )
+        lkredis.update_feed_stat(
+            feed_id,
+            user_id
+        )
         lkmysql.update_feed_stat(feed_id)
-        lkmysql.add_feed_like(feed_id, user_id)
+        lkmysql.insert_feed_like(feed_id, user_id)
         return json.dumps({"status": "Success"})
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return json.dumps({"status": "Failed"})
 
 
@@ -41,32 +43,31 @@ def get_feed_like_list(feed_id):
         data = []
         new_max_id = 0
         new_is_friend = is_friend
-        total = lkmysql.query_feed_stat(feed_id)
+        total = lkredis.query_feed_stat(feed_id)
         if total > 0:
-            data, new_max_id = lkmysql.query_feed_like(
-                feed_id,
-                user_id,
-                is_friend,
-                max_id
-            )
+            if is_friend == 1:
+                data, new_max_id = lkredis.query_friend_feed_like(
+                    feed_id,
+                    user_id,
+                    is_friend
+                )
+                if len(data) == 0:
+                    is_friend = 0
             #get data from non-friend
-            if len(data) < 50 and is_friend == 1:
-                d, new_max_id = lkmysql.query_feed_like(
+            if len(data) == 0:
+                data, new_max_id = lkredis.query_non_friend_feed_like(
                     feed_id,
                     user_id,
                     0,
                     0,
                 )
-                new_is_friend = 0
-                data += d
 
         res['total'] = total
         res['data'] = data
-        res['is_friend'] = new_is_friend
         res['max_id'] = new_max_id
         return json.dumps(res)
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return json.dumps({"status": "Failed"})
 
 
