@@ -1,3 +1,14 @@
-curl -XPOST 'http://127.0.0.1:5000/feed' -d 'action=1&feed_id=1&user_id=1&is_friend=1'
+curl -XPOST 'http://127.0.0.1:5000/v1/feed' -d 'action=1&feed_id=1&user_id=1&is_friend=1'
 
-curl -XGET 'http://127.0.0.1:5000/feed/10?max_id=0&is_friend=1&now_user_stat=0'
+curl -XGET 'http://127.0.0.1:5000/v1/feed/10/likes?max_id=0&user_id=101&is_friend=1&max_id=0'
+
+select id, like_uid from feed_like where feed_id = 74 and like_uid not in (select to_uid from friends where from_uid=99901) and id > 10 order by id limit 50; 
+
+
+select concat(round(sum(data_length/1024/1024),2),'MB') as data_length_MB,  
+concat(round(sum(index_length/1024/1024),2),'MB') as index_length_MB  
+from information_schema.tables where  
+table_schema='pcc'  
+and table_name = 'friends'; 
+
+uwsgi --http :5000 --wsgi-file like.py --callable app --processes 8

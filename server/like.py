@@ -12,7 +12,7 @@ app = Flask(__name__)
 def index():
     return "OK"
 
-@app.route("/feed", methods=["POST"])
+@app.route("/v1/feed", methods=["POST"])
 def feed_like():
     try:
         res = dict()
@@ -20,18 +20,17 @@ def feed_like():
         user_id = int(request.form['user_id'])
         # lkredis.update_feed_stat(
         #     feed_id,
-        #     is_friend,
         #     user_id
         # )
-        mysql.update_feed_stat(feed_id)
-        mysql.add_feed_like(feed_id, user_id)
+        lkmysql.update_feed_stat(feed_id)
+        lkmysql.add_feed_like(feed_id, user_id)
         return json.dumps({"status": "Success"})
     except Exception as e:
         print(e)
         return json.dumps({"status": "Failed"})
 
 
-@app.route("/feed/<feed_id>", methods=["GET"])
+@app.route("/v1/feed/<feed_id>/likes", methods=["GET"])
 def get_feed_like_list(feed_id):
     try:
         res = dict()
